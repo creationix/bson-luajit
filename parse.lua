@@ -5,18 +5,12 @@ local types, UInt32, Double, String, Document, Array, Binary, Undefined,
       ObjectID, Boolean, DateTime, Null, CString, DBPointer, JavaScript,
       Symbol, ScopedJavaScript, Int32, TimeStamp, Int64, Max, Min
 
-local uintBox = ffi.typeof("struct { uint32_t i; }")
 function UInt32(buf, i)
-  local num = uintBox()
-  ffi.copy(num, buf + i, 4)
-  return num.i, 4
+  return ffi.cast("uint32_t*", buf + i)[0], 4
 end
 
-local doubleBox = ffi.typeof("struct { double d; }")
 function Double(buf, i)
-  local num = doubleBox()
-  ffi.copy(num, buf + i, 8)
-  return num.d, 8
+  return ffi.cast("double*", buf + i)[0], 8
 end
 
 function String(buf, i)
@@ -56,7 +50,6 @@ function Array(buf, i)
     i = i + 2
     doc[index + 1], consumed = parser(buf, i)
     i = i + consumed
-    prettyPrint(doc)
   end
   return doc, length
 end
@@ -106,22 +99,16 @@ function ScopedJavaScript(buf, i)
   error "TODO: Implement ScopedJavaScript"
 end
 
-local intBox = ffi.typeof("struct { int32_t i; }")
 function Int32(buf, i)
-  local num = intBox()
-  ffi.copy(num, buf + i, 4)
-  return num.i, 4
+  return ffi.cast("int32_t*", buf + i)[0], 4
 end
 
 function TimeStamp(buf, i)
   error "TODO: Implement TimeStamp"
 end
 
-local int64Box = ffi.typeof("struct { int64_t i; }")
 function Int64(buf, i)
-  local num = int64Box()
-  ffi.copy(num, buf + i, 8)
-  return num.i, 8
+  return ffi.cast("int64_t*", buf + i)[0], 8
 end
 
 function Max(buf, i)
