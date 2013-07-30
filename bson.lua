@@ -1,25 +1,21 @@
-local prettyPrint = require("utils").prettyPrint
-local ffi = require 'ffi'
+local ffi = require('ffi')
+local types
 
-local types, Double, String, Document, Array, Binary, Undefined, ObjectID,
-      Boolean, DateTime, Null, RegularExpression, DBPointer, JavaScript, Symbol,
-      ScopedJavaScript, Int32, TimeStamp, Int64, Max, Min
-
-function Double(buf, i)
+local function Double(buf, i)
   return ffi.cast("double*", buf + i)[0], 8
 end
 
-function CString(buf, i)
+local function CString(buf, i)
   local string = ffi.string(buf + i)
   return string, #string + 1
 end
 
-function String(buf, i)
+local function String(buf, i)
   local length = ffi.cast("uint32_t*", buf + i)[0]
   return ffi.string(buf + i + 4, length - 1), length + 4
 end
 
-function Document(buf, i)
+local function Document(buf, i)
   local length = ffi.cast("uint32_t*", buf + i)[0]
   local last = i + length - 1
   i = i + 4
@@ -36,7 +32,7 @@ function Document(buf, i)
   return doc, length
 end
 
-function Array(buf, i)
+local function Array(buf, i)
   local length = ffi.cast("uint32_t*", buf + i)[0]
   local last = i + length - 1
   i = i + 4
@@ -55,7 +51,7 @@ function Array(buf, i)
   return doc, length
 end
 
-function Binary(buf, i)
+local function Binary(buf, i)
   local length = ffi.cast("uint32_t*", buf + i)[0]
   return {
     subtype = buf[i + 4],
@@ -63,27 +59,27 @@ function Binary(buf, i)
   }, length + 5
 end
 
-function Undefined(buf, i)
+local function Undefined(buf, i)
   return nil, 0
 end
 
-function ObjectID(buf, i)
+local function ObjectID(buf, i)
   return ffi.string(buf + i, 12), 12
 end
 
-function Boolean(buf, i)
+local function Boolean(buf, i)
   return buf[i] > 0 and true or false, 1
 end
 
-function DateTime(buf, i)
+local function DateTime(buf, i)
   return ffi.cast("uint64_t*", buf + i)[0], 8
 end
 
-function Null(buf, i)
+local function Null(buf, i)
   return nil, 0
 end
 
-function RegularExpression(buf, i)
+local function RegularExpression(buf, i)
   local start = i
   local pattern = ffi.string(buf + i)
   i = i + #pattern + 1
@@ -95,7 +91,7 @@ function RegularExpression(buf, i)
   }, i - start
 end
 
-function DBPointer(buf, i)
+local function DBPointer(buf, i)
   local start = i
   local name = ffi.string(buf + i)
   i = i + #name + 1
@@ -107,17 +103,17 @@ function DBPointer(buf, i)
   }, i - start
 end
 
-function JavaScript(buf, i)
+local function JavaScript(buf, i)
   local js = ffi.string(buf + i)
   return js, #js + 1
 end
 
-function Symbol(buf, i)
+local function Symbol(buf, i)
   local symbol = ffi.string(buf + i)
   return symbol, #symbol + 1
 end
 
-function ScopedJavaScript(buf, i)
+local function ScopedJavaScript(buf, i)
   local start = i
   local js = ffi.string(buf + i)
   i = i + #js + 1
@@ -129,23 +125,23 @@ function ScopedJavaScript(buf, i)
   }, i - start
 end
 
-function Int32(buf, i)
+local function Int32(buf, i)
   return ffi.cast("int32_t*", buf + i)[0], 4
 end
 
-function TimeStamp(buf, i)
+local function TimeStamp(buf, i)
   return ffi.cast("uint64_t*", buf + i)[0], 8
 end
 
-function Int64(buf, i)
+local function Int64(buf, i)
   return ffi.cast("int64_t*", buf + i)[0], 8
 end
 
-function Max(buf, i)
+local function Max(buf, i)
   return math.huge, 0
 end
 
-function Min(buf, i)
+local function Min(buf, i)
   return -math.huge, 0
 end
 
@@ -172,14 +168,18 @@ types = {
   [255] = Min,
 }
 
-local function parse(string)
-  prettyPrint(string)
+local function decode(string)
   local length = #string
   local doc, consumed = Document(ffi.cast("const char*", string), 0)
   assert(consumed == length, "Length mismatch")
-  prettyPrint(doc)
+  return doc
 end
 
+local function encode(doc)
+  error "TODO: Implement encode"
+end
 
-parse "\22\0\0\0\2hello\0\6\0\0\0world\0\0"
-parse "\49\0\0\0\4BSON\0\38\0\0\0\2\48\0\8\0\0\0awesome\0\1\49\0\51\51\51\51\51\51\20\64\16\50\0\194\7\0\0\0\0"
+return {
+  decode = decode,
+  encode = encode
+}
